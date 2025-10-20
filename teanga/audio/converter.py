@@ -252,3 +252,87 @@ class AudioConverter:
         )
 
         return output_path, normalized_info
+
+    def extract_clip(
+        self,
+        input_path: Path,
+        output_path: Path,
+        start_seconds: float,
+        duration_seconds: float,
+        sample_rate: Optional[int] = None,
+        channels: Optional[int] = None,
+    ) -> Path:
+        """
+        Extract a clip from an audio file.
+
+        Args:
+            input_path: Path to input audio file
+            output_path: Path for output clip file
+            start_seconds: Start time in seconds
+            duration_seconds: Duration of clip in seconds
+            sample_rate: Target sample rate (default: instance setting)
+            channels: Target channels (default: instance setting)
+
+        Returns:
+            Path to extracted clip
+
+        Raises:
+            AudioConversionError: If extraction fails
+        """
+        sample_rate = sample_rate or self.target_sample_rate
+        channels = channels or self.target_channels
+
+        logger.info(
+            f"🎬 Extracting audio clip",
+            extra={
+                "input": str(input_path),
+                "output": str(output_path),
+                "start": start_seconds,
+                "duration": duration_seconds,
+            },
+        )
+
+        # Ensure output directory exists
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            # Build ffmpeg command with seek and duration
+            stream = ffmpeg.input(str(input_path), ss=start_seconds, t=duration_seconds)
+            stream = ffmpeg.output(
+                stream,
+                str(output_path),
+                acodec="pcm_s16le",  # 16-bit PCM
+                ar=sample_rate,       # Sample rate
+                ac=channels,          # Number of channels
+                loglevel="error",     # Only show errors
+            )
+
+            # Run extraction (overwrite output if exists)
+            ffmpeg.run(stream, overwrite_output=True, capture_stderr=True)
+
+            # Verify output exists
+            if not output_path.exists():
+                raise AudioConversionError(f"Extraction completed but output not found: {output_path}")
+
+            output_size = output_path.stat().st_size
+            logger.info(
+                f"✅ Clip extracted successfully",
+                extra={
+                    "output": str(output_path),
+                    "size_bytes": output_size,
+                },
+            )
+
+            return output_path
+
+        except ffmpeg.Error as e:
+            error_msg = e.stderr.decode() if e.stderr else str(e)
+            logger.error(
+                f"❌ FFmpeg extraction failed",
+                extra={
+                    "input": str(input_path),
+                    "output": str(output_path),
+                    "error": error_msg,
+                },
+            )
+            raise AudioConversionError(f"Audio clip extraction failed: {error_msg}")
