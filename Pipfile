@@ -12,6 +12,8 @@ python-dotenv = "*"
 ffmpeg-python = "*"
 torch = "*"
 faster-whisper = "*"
+transformers = "*"
+librosa = "*"
 
 [dev-packages]
 

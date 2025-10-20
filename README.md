@@ -157,11 +157,12 @@ manager.add_processing_step("download", status="success")
 ## Next Steps
 
 - [x] ~~Implement Whisper transcription component~~
-- [ ] **NEXT:** Irish language normalization (Claude/OpenAI post-processing)
-- [ ] Build glossing and exercise generation
-- [ ] Implement dialect detection
-- [ ] Add Conductor workflow definitions
-- [ ] Package as learning material bundles
+- [x] ~~Explore Irish language transcription~~ (Shelved - see Known Issues)
+- [ ] **OPTIONS:**
+  - Set up Conductor OSS for workflow orchestration
+  - Build glossing/exercise generation (using manual transcripts)
+  - Implement dialect detection component
+  - Package learning materials workflow
 
 ## Known Issues
 
@@ -171,8 +172,15 @@ Due to cuDNN library path issues, GPU transcription must use the wrapper:
 ./scripts/run_with_cudnn.sh python scripts/try_transcription.py [args]
 ```
 
-### Irish Transcribed as Welsh
-faster-whisper doesn't support Irish ('ga'), so it detects as Welsh ('cy') and uses Welsh orthography. This will be corrected in the next iteration with Claude/OpenAI normalization.
+### Irish Transcription Not Viable (Shelved)
+Automated Irish transcription is currently not viable. We tested three approaches:
+- **Whisper auto-detect:** Produces Welsh orthography (unusable)
+- **Whisper English mode:** Interprets Irish as English (lossy)
+- **Irish wav2vec2:** Produces garbled Irish text (gibberish)
+
+**See detailed analysis:** [PRODUCT/irish_transcription_challenge.md](PRODUCT/irish_transcription_challenge.md)
+
+**Recommendation:** Use manual transcription or human-in-the-loop workflows for now. The transcription infrastructure (Whisper/GPU setup) works well for other languages and will be useful when better Irish models become available.
 
 ## Development Guidelines
 
